@@ -19,6 +19,10 @@ export default function Home() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Unique Browser ID for this project
+  const projectId = 'plz-checker-webapp-2024';
+  const browserId = `${projectId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
   const validatePlz = (value) => /^\d{5}$/.test(value);
 
   const handleSubmit = async (e) => {
@@ -46,7 +50,19 @@ export default function Home() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f7fafc', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      {/* Aboutwater Logo */}
+      <a href="#" className="aboutwater-logo">
+        <div className="logo-icon"></div>
+        <div className="logo-text">
+          <span className="logo-main-text">aboutwater</span>
+          <span className="logo-tagline">making water your water.</span>
+        </div>
+      </a>
+      
       <h1 style={{ fontSize: 32, marginBottom: 16 }}>PLZ Router</h1>
+      <div style={{ fontSize: 14, color: '#666', marginBottom: 20, textAlign: 'center' }}>
+        Project ID: {projectId} | Browser ID: {browserId}
+      </div>
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12, width: 320, maxWidth: '90vw' }}>
         <input
           type="text"

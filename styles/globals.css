@@ -1,0 +1,119 @@
+/* Global styles for PLZ Checker Webapp */
+
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Aboutwater Logo */
+.aboutwater-logo {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  background: #1a5f7a; /* Dark teal-blue circle */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.logo-icon::before {
+  content: '';
+  width: 16px;
+  height: 20px;
+  background: white;
+  border-radius: 8px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+
+.logo-icon::after {
+  content: '';
+  width: 6px;
+  height: 8px;
+  background: white;
+  border-radius: 0 0 3px 3px;
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.logo-main-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a5f7a; /* Dark teal-blue text */
+  text-transform: lowercase;
+  letter-spacing: 0.5px;
+}
+
+.logo-tagline {
+  font-size: 12px;
+  font-weight: 400;
+  color: #4a8ba8; /* Lighter blue tagline */
+  text-transform: lowercase;
+  letter-spacing: 0.3px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .aboutwater-logo {
+    top: 15px;
+    left: 15px;
+  }
+  
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .logo-icon::before {
+    width: 12px;
+    height: 16px;
+    border-radius: 6px;
+  }
+  
+  .logo-icon::after {
+    width: 4px;
+    height: 6px;
+    bottom: 4px;
+  }
+  
+  .logo-main-text {
+    font-size: 14px;
+  }
+  
+  .logo-tagline {
+    font-size: 10px;
+  }
+}
