@@ -121,28 +121,10 @@ body {
 }
 
 .logo-icon::before {
-  content: '';
-  width: 16px;
-  height: 20px;
-  background: white;
-  border-radius: 8px;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-}
-
-.logo-icon::after {
-  content: '';
-  width: 6px;
-  height: 8px;
-  background: white;
-  border-radius: 0 0 3px 3px;
-  position: absolute;
-  bottom: 6px;
-  left: 50%;
-  transform: translateX(-50%);
+  content: '💧';
+  font-size: 24px;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .logo-text {
@@ -152,23 +134,23 @@ body {
 }
 
 .logo-main-text {
-  font-size: 20px;
-  font-weight: 800;
+  font-size: 22px;
+  font-weight: 700;
   color: var(--aboutwater-primary);
   text-transform: lowercase;
-  font-variant: small-caps;
-  letter-spacing: 1px;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.5px;
   line-height: 1.2;
   transition: color var(--transition-normal);
 }
 
 .logo-tagline {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--aboutwater-accent);
   text-transform: lowercase;
-  font-style: italic;
-  letter-spacing: 0.5px;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.3px;
   line-height: 1.3;
   opacity: 0.9;
   transition: opacity var(--transition-normal);
@@ -197,15 +179,7 @@ body {
   }
   
   .logo-icon::before {
-    width: 14px;
-    height: 18px;
-    border-radius: 7px;
-  }
-  
-  .logo-icon::after {
-    width: 5px;
-    height: 7px;
-    bottom: 5px;
+    font-size: 20px;
   }
   
   .logo-main-text {
@@ -230,6 +204,10 @@ body {
   .logo-icon {
     width: 32px;
     height: 32px;
+  }
+  
+  .logo-icon::before {
+    font-size: 16px;
   }
   
   .logo-main-text {
