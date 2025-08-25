@@ -49,21 +49,22 @@ export default function Home() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f7fafc', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      {/* Aboutwater Logo */}
-      <a href="#" className="aboutwater-logo">
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div className="main-container">
+      {/* AboutWater Logo */}
+      <div className="aboutwater-header">
         <div className="logo-icon"></div>
         <div className="logo-text">
           <span className="logo-main-text">aboutwater</span>
           <span className="logo-tagline">making water your water.</span>
         </div>
-      </a>
+      </div>
       
-      <h1 style={{ fontSize: 32, marginBottom: 16 }}>PLZ Router</h1>
-      <div style={{ fontSize: 14, color: '#666', marginBottom: 20, textAlign: 'center' }}>
+      <h1>PLZ Router</h1>
+      <div className="project-info">
         Project ID: {projectId} | Browser ID: {browserId}
       </div>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12, width: 320, maxWidth: '90vw' }}>
+      <form onSubmit={handleSubmit}>
         <input
           type="text"
           inputMode="numeric"
@@ -73,43 +74,35 @@ export default function Home() {
           placeholder="PLZ eingeben (z.B. 80331)"
           value={plz}
           onChange={e => setPlz(e.target.value.replace(/[^0-9]/g, ''))}
-          style={{ padding: 12, fontSize: 18, borderRadius: 6, border: '1px solid #ccc', outline: 'none' }}
+          className="plz-input"
         />
         <button
           type="submit"
-          style={{ padding: 12, fontSize: 18, borderRadius: 6, background: '#0070f3', color: '#fff', border: 'none', cursor: 'pointer' }}
+          className="water-button"
           disabled={loading}
         >
           {loading ? 'Prüfe...' : 'Check'}
         </button>
       </form>
       {error && (
-        <div style={{ marginTop: 24, color: '#b00020', background: '#ffeaea', padding: 16, borderRadius: 8, width: 320, maxWidth: '90vw', textAlign: 'center' }}>
+        <div className="error-card">
           <span role="img" aria-label="Fehler">❌</span> {error}
         </div>
       )}
       {result && (
-        <div style={{
-          marginTop: 24,
-          background: getColor(result.person),
-          padding: 20,
-          borderRadius: 10,
-          width: 320,
-          maxWidth: '90vw',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
-          textAlign: 'center',
-          fontSize: 20
+                <div className="result-card" style={{
+          background: getColor(result.person)
         }}>
-          <div style={{ fontSize: 32, marginBottom: 8 }}>
+          <span className="emoji">
             {result.person === 'Anna Kropfitsch' && '👩‍💼'}
             {result.person === 'Carmen Bergar' && '👩‍💼'}
             {result.person === 'Mattias Herbst' && '🧑‍💼'}
-          </div>
-          <div><b>{result.person}</b></div>
-          <div style={{ fontSize: 16, marginTop: 4, color: '#555' }}>{result.land}</div>
+          </span>
+          <div className="person-name">{result.person}</div>
+          <div className="land-info">{result.land}</div>
         </div>
       )}
-      <footer style={{ marginTop: 40, color: '#888', fontSize: 14 }}>Made with ❤️ for German PLZ routing</footer>
+      </div>
     </div>
   );
 } 
