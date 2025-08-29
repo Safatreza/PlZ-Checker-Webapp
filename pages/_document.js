@@ -1,17 +1,25 @@
 import { Html, Head, Main, NextScript } from 'next/document'
 
+/**
+ * Custom HTML document component
+ * Configures HTML lang, meta tags, and document structure
+ * @returns {JSX.Element} HTML document structure
+ */
 export default function Document() {
   return (
     <Html lang="de">
       <Head>
+        {/* Basic meta tags for proper document setup */}
         <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        
+        {/* SEO and application meta tags */}
         <meta name="description" content="PLZ Router Webapp - German Postal Code Routing System" />
-        <meta name="author" content="AboutWater GmbH" />
+        <meta name="author" content="aboutwater GmbH" />
         <meta name="project-id" content="plz-checker-webapp-2024" />
-        <meta name="browser-id" content={`plz-checker-${Date.now()}`} />
+        <meta name="application" content="PLZ Router - aboutwater GmbH" />
+        
+        {/* Favicon */}
         <link rel="icon" href="/favicon.ico" />
-        <title>PLZ Router - AboutWater GmbH</title>
       </Head>
       <body>
         <Main />
