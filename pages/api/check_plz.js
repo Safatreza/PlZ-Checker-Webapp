@@ -1,3 +1,22 @@
+// Contact details for sales managers
+const CONTACTS = {
+  'Matthias Herbst': {
+    name: 'Matthias Herbst',
+    position: 'Sales Manager',
+    email: 'matthias.herbst@aboutwater.de'
+  },
+  'Carmen Berger': {
+    name: 'Carmen Berger', 
+    position: 'Sales Manager',
+    email: 'carmen.berger@aboutwater.de'
+  },
+  'Anna Kropfitsch': {
+    name: 'Anna Kropfitsch',
+    position: 'Sales Manager', 
+    email: 'anna.kropfitsch@aboutwater.de'
+  }
+};
+
 /**
  * API endpoint for PLZ validation and person/state mapping
  * @param {NextApiRequest} req - API request object
@@ -10,8 +29,8 @@ export default function handler(req, res) {
     return;
   }
   
-  // Extract and sanitize PLZ from query parameters
-  const { plz } = req.query;
+  // Extract and sanitize PLZ and chosen person from query parameters
+  const { plz, chosenPerson } = req.query;
   const sanitizedPlz = String(plz || '').trim().replace(/[^\d]/g, '');
   
   // Validate PLZ format: exactly 5 digits
@@ -19,33 +38,70 @@ export default function handler(req, res) {
     res.status(400).json({ error: 'Ungültige PLZ. Bitte geben Sie eine 5-stellige Zahl ein.' });
     return;
   }
+  
   // Extract first digit for region mapping
   const first = sanitizedPlz[0];
   let person, land;
   
-  // Map PLZ first digit to responsible person and region
-  // Based on German postal code system
-  if ('789'.includes(first)) {
-    // Southern Germany: Bavaria, Baden-Württemberg
+  // New PLZ assignment rules
+  if ('0123'.includes(first)) {
+    // PLZ 0, 1, 2, 3: Assign to Matthias Herbst
+    person = 'Matthias Herbst';
+    land = getLandByFirstDigit(first);
+  } else if ('45'.includes(first)) {
+    // PLZ 4, 5: User chooses between Matthias Herbst and Anna Kropfitsch
+    if (!chosenPerson || !['Matthias Herbst', 'Anna Kropfitsch'].includes(chosenPerson)) {
+      // Return options for user to choose from
+      return res.status(200).json({
+        requiresChoice: true,
+        options: [
+          {
+            person: 'Matthias Herbst',
+            contact: CONTACTS['Matthias Herbst']
+          },
+          {
+            person: 'Anna Kropfitsch', 
+            contact: CONTACTS['Anna Kropfitsch']
+          }
+        ],
+        land: first === '4' ? 'Nordrhein-Westfalen' : 'Nordrhein-Westfalen/Rheinland-Pfalz'
+      });
+    }
+    person = chosenPerson;
+    land = first === '4' ? 'Nordrhein-Westfalen' : 'Nordrhein-Westfalen/Rheinland-Pfalz';
+  } else if ('67'.includes(first)) {
+    // PLZ 6, 7: Assign to Carmen Berger
+    person = 'Carmen Berger';
+    land = first === '6' ? 'Hessen/Rheinland-Pfalz' : 'Baden-Württemberg';
+  } else if ('89'.includes(first)) {
+    // PLZ 8, 9: Assign to Anna Kropfitsch
     person = 'Anna Kropfitsch';
-    land = 'Bayern';
-  } else if ('356'.includes(first)) {
-    // Central Germany: Hesse, Rhineland-Palatinate, Saarland
-    person = 'Carmen Bergar';
-    land = 'Hessen';
-  } else if ('124'.includes(first)) {
-    // Northern/Eastern Germany regions
-    person = 'Mattias Herbst';
-    land = first === '1' ? 'Brandenburg/Berlin' : (first === '2' ? 'Hamburg/Schleswig-Holstein' : 'Niedersachsen/Bremen');
-  } else if (first === '0') {
-    // Eastern Germany: Former GDR states
-    person = 'Mattias Herbst';
-    land = 'Sachsen/Thüringen/Sachsen-Anhalt';
+    land = first === '8' ? 'Baden-Württemberg/Bayern' : 'Bayern';
   } else {
     // Unmapped PLZ range
     res.status(400).json({ error: 'PLZ nicht zuordenbar.' });
     return;
   }
-  // Return successful mapping result
-  res.status(200).json({ person, land });
+  
+  // Return successful mapping result with contact details
+  res.status(200).json({ 
+    person, 
+    land,
+    contact: CONTACTS[person]
+  });
+}
+
+/**
+ * Get German state/region by first digit of PLZ
+ * @param {string} firstDigit - First digit of PLZ
+ * @returns {string} German state or region name
+ */
+function getLandByFirstDigit(firstDigit) {
+  switch (firstDigit) {
+    case '0': return 'Sachsen/Thüringen/Sachsen-Anhalt';
+    case '1': return 'Brandenburg/Berlin';
+    case '2': return 'Hamburg/Schleswig-Holstein/Mecklenburg-Vorpommern';
+    case '3': return 'Niedersachsen/Bremen';
+    default: return 'Deutschland';
+  }
 }

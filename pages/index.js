@@ -9,9 +9,9 @@ const getPersonColor = (person) => {
   switch (person) {
     case 'Anna Kropfitsch':
       return '#059669'; // emerald
-    case 'Carmen Bergar':
+    case 'Carmen Berger':
       return '#1e40af'; // blue
-    case 'Mattias Herbst':
+    case 'Matthias Herbst':
       return '#ea580c'; // orange
     default:
       return '#64748b'; // slate
@@ -37,6 +37,7 @@ export default function Home() {
   const [result, setResult] = useState(null); // API response with person/land data
   const [error, setError] = useState(''); // Error message to display
   const [loading, setLoading] = useState(false); // Loading state during API call
+  const [choiceOptions, setChoiceOptions] = useState(null); // Options for user choice (PLZ 4/5)
   
   // Contact dropdown states
   const [showSupportDropdown, setShowSupportDropdown] = useState(false);
@@ -53,11 +54,12 @@ export default function Home() {
    * Handles form submission and API call - memoized to prevent unnecessary re-renders
    * @param {Event} e - Form submit event
    */
-  const handleSubmit = useCallback(async (e) => {
+  const handleSubmit = useCallback(async (e, chosenPerson = null) => {
     e.preventDefault();
     // Reset previous results and errors
     setResult(null);
     setError('');
+    setChoiceOptions(null);
     
     // Client-side validation
     if (!validatePlz(plz)) {
@@ -69,6 +71,9 @@ export default function Home() {
     try {
       // Secure URL parameter construction
       const params = new URLSearchParams({ plz });
+      if (chosenPerson) {
+        params.append('chosenPerson', chosenPerson);
+      }
       
       // Setup request timeout to prevent hanging requests
       const controller = new AbortController();
@@ -82,8 +87,11 @@ export default function Home() {
       
       const data = await res.json();
       if (res.ok) {
-        // Validate API response structure before using
-        if (data && typeof data.person === 'string' && typeof data.land === 'string') {
+        if (data.requiresChoice) {
+          // PLZ 4 or 5: Show choice options
+          setChoiceOptions(data);
+        } else if (data && typeof data.person === 'string' && typeof data.land === 'string') {
+          // Regular result with assigned person
           setResult(data);
         } else {
           setError('Ungültige Antwort vom Server.');
@@ -102,6 +110,12 @@ export default function Home() {
     }
     setLoading(false);
   }, [plz, validatePlz]);
+  
+  // Handle user choice for PLZ 4/5
+  const handlePersonChoice = useCallback((chosenPerson) => {
+    const fakeEvent = { preventDefault: () => {} };
+    handleSubmit(fakeEvent, chosenPerson);
+  }, [handleSubmit]);
 
   // Memoized input change handler
   const handleInputChange = useCallback((e) => {
@@ -253,6 +267,47 @@ export default function Home() {
             </div>
           )}
 
+          {/* Choice Options Display for PLZ 4/5 */}
+          {choiceOptions && (
+            <div className="choice-card" role="region" aria-label="Ansprechpartner wählen">
+              <div className="choice-header">
+                <div className="choice-status">
+                  <span role="img" aria-label="Wahl erforderlich">🤔</span>
+                  Ansprechpartner wählen
+                </div>
+                <div className="plz-display">PLZ: {plz}</div>
+              </div>
+              <div className="choice-content">
+                <p className="choice-description">
+                  Für diese PLZ können Sie zwischen zwei Ansprechpartnern wählen:
+                </p>
+                <div className="choice-options">
+                  {choiceOptions.options.map((option, index) => (
+                    <button
+                      key={index}
+                      className="choice-option"
+                      onClick={() => handlePersonChoice(option.person)}
+                    >
+                      <div 
+                        className="person-avatar"
+                        style={{
+                          backgroundColor: getPersonColor(option.person)
+                        }}
+                      >
+                        {getPersonInitials(option.person)}
+                      </div>
+                      <div className="choice-option-content">
+                        <div className="choice-option-name">{option.contact.name}</div>
+                        <div className="choice-option-position">{option.contact.position}</div>
+                        <div className="choice-option-contact">{option.contact.email}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Results Display */}
           {result && (
             <div className="result-card" role="region" aria-label="Suchergebnis">
@@ -275,7 +330,19 @@ export default function Home() {
                     >
                       {getPersonInitials(result.person)}
                     </div>
-                    <div className="result-value">{result.person}</div>
+                    <div className="person-details">
+                      <div className="result-value">{result.contact?.name || result.person}</div>
+                      <div className="result-position">{result.contact?.position}</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="result-item">
+                  <div className="result-label">Kontakt</div>
+                  <div className="contact-details">
+                    <div className="contact-line">
+                      <span role="img" aria-label="E-Mail">📧</span>
+                      <a href={`mailto:${result.contact?.email}`}>{result.contact?.email}</a>
+                    </div>
                   </div>
                 </div>
                 <div className="result-item">
