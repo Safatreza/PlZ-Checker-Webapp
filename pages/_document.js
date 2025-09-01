@@ -14,9 +14,9 @@ export default function Document() {
         
         {/* SEO and application meta tags */}
         <meta name="description" content="PLZ Router Webapp - German Postal Code Routing System" />
-        <meta name="author" content="aboutwater GmbH" />
+        <meta name="author" content="aboutwater" />
         <meta name="project-id" content="plz-checker-webapp-2024" />
-        <meta name="application" content="PLZ Router - aboutwater GmbH" />
+        <meta name="application" content="PLZ Router - aboutwater" />
         
         {/* Favicon */}
         <link rel="icon" href="/favicon.ico" />

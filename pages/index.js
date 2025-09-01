@@ -37,6 +37,10 @@ export default function Home() {
   const [result, setResult] = useState(null); // API response with person/land data
   const [error, setError] = useState(''); // Error message to display
   const [loading, setLoading] = useState(false); // Loading state during API call
+  
+  // Contact dropdown states
+  const [showSupportDropdown, setShowSupportDropdown] = useState(false);
+  const [showContactDropdown, setShowContactDropdown] = useState(false);
 
   /**
    * Validates PLZ format (5 digits) - memoized for performance
@@ -114,14 +118,65 @@ export default function Home() {
               <img src="/Logo.png" alt="AboutWater Logo" />
             </div>
             <div className="logo-text">
-              <div className="company-name">aboutwater GmbH</div>
+              <div className="company-name">aboutwater</div>
               <div className="company-tagline">making water your water</div>
             </div>
           </div>
           <nav className="nav-links">
-            <a href="mailto:safat.majumder@aboutwater.de" className="nav-link">
-              Contact: safat.majumder@aboutwater.de
-            </a>
+            <div className="contact-buttons">
+              <div className="contact-dropdown-container">
+                <button 
+                  className="contact-btn"
+                  onClick={() => {
+                    setShowSupportDropdown(!showSupportDropdown);
+                    setShowContactDropdown(false);
+                  }}
+                  aria-expanded={showSupportDropdown}
+                  aria-haspopup="true"
+                >
+                  Support
+                  <span className={`dropdown-arrow ${showSupportDropdown ? 'open' : ''}`}>▼</span>
+                </button>
+                {showSupportDropdown && (
+                  <div className="contact-dropdown">
+                    <a href="mailto:safat.majumder@aboutwater.de" className="dropdown-item">
+                      safat.majumder@aboutwater.de
+                    </a>
+                  </div>
+                )}
+              </div>
+              
+              <div className="contact-dropdown-container">
+                <button 
+                  className="contact-btn"
+                  onClick={() => {
+                    setShowContactDropdown(!showContactDropdown);
+                    setShowSupportDropdown(false);
+                  }}
+                  aria-expanded={showContactDropdown}
+                  aria-haspopup="true"
+                >
+                  Contact
+                  <span className={`dropdown-arrow ${showContactDropdown ? 'open' : ''}`}>▼</span>
+                </button>
+                {showContactDropdown && (
+                  <div className="contact-dropdown">
+                    <div className="dropdown-item">
+                      <div className="contact-info">
+                        <div className="contact-line">
+                          📞 +49 (0)89 / 95 45 93 - 0
+                        </div>
+                        <div className="contact-line">
+                          <a href="mailto:info@aboutwater.de">
+                            ✉️ info@aboutwater.de
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </nav>
         </div>
       </header>
