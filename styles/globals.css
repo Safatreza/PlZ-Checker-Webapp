@@ -609,6 +609,21 @@ body::before {
   font-size: 0.875rem;
 }
 
+/* Processing info styles */
+.processing-info {
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.processing-info small {
+  color: var(--gray-600);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .header-content {
