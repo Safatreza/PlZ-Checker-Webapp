@@ -45,10 +45,11 @@ const customJestConfig = {
   },
   
   // Module name mapping for CSS and static files
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/components/(.*)$': '<rootDir>/components/$1',
     '^@/pages/(.*)$': '<rootDir>/pages/$1',
     '^@/styles/(.*)$': '<rootDir>/styles/$1',
+    '^@/config/(.*)$': '<rootDir>/config/$1',
   },
 };
 

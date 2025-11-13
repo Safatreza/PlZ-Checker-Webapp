@@ -9,11 +9,11 @@ global.fetch = jest.fn();
 // Test data for PLZ validation
 const testCases = [
   // Valid PLZ cases
-  { plz: '80331', expected: true, person: 'Anna Kropfitsch', land: 'Bayern' },
-  { plz: '12345', expected: true, person: 'Mattias Herbst', land: 'Brandenburg/Berlin' },
-  { plz: '20095', expected: true, person: 'Mattias Herbst', land: 'Hamburg/Schleswig-Holstein' },
-  { plz: '34567', expected: true, person: 'Carmen Bergar', land: 'Hessen' },
-  { plz: '01234', expected: true, person: 'Mattias Herbst', land: 'Sachsen/Thüringen/Sachsen-Anhalt' },
+  { plz: '80331', expected: true, person: 'Anna Kropfitsch', land: 'Baden-Württemberg/Bayern' },
+  { plz: '12345', expected: true, person: 'Matthias Herbst', land: 'Brandenburg/Berlin' },
+  { plz: '20095', expected: true, person: 'Matthias Herbst', land: 'Hamburg/Schleswig-Holstein/Mecklenburg-Vorpommern' },
+  { plz: '34567', expected: true, person: 'Carmen Berger', land: 'Hessen' },
+  { plz: '01234', expected: true, person: 'Matthias Herbst', land: 'Sachsen/Thüringen/Sachsen-Anhalt' },
   
   // Invalid PLZ cases
   { plz: '1234', expected: false }, // Too short
@@ -70,14 +70,18 @@ describe('PLZ Validation', () => {
 
     test('should handle valid PLZ requests', () => {
       const handler = require('../pages/api/check_plz.js').default;
-      
+
       mockReq.query = { plz: '80331' };
       handler(mockReq, mockRes);
-      
+
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith({
         person: 'Anna Kropfitsch',
-        land: 'Bayern'
+        land: 'Baden-Württemberg/Bayern',
+        contact: expect.objectContaining({
+          name: 'Anna Kropfitsch',
+          email: 'anna.kropfitsch@aboutwater.de'
+        })
       });
     });
 
@@ -95,14 +99,18 @@ describe('PLZ Validation', () => {
 
     test('should sanitize input with non-numeric characters', () => {
       const handler = require('../pages/api/check_plz.js').default;
-      
+
       mockReq.query = { plz: '80-3.31' };
       handler(mockReq, mockRes);
-      
+
       expect(mockRes.status).toHaveBeenCalledWith(200);
       expect(mockRes.json).toHaveBeenCalledWith({
         person: 'Anna Kropfitsch',
-        land: 'Bayern'
+        land: 'Baden-Württemberg/Bayern',
+        contact: expect.objectContaining({
+          name: 'Anna Kropfitsch',
+          email: 'anna.kropfitsch@aboutwater.de'
+        })
       });
     });
   });
@@ -112,32 +120,40 @@ describe('PLZ Validation', () => {
    */
   describe('PLZ mapping logic', () => {
     const mappingTests = [
-      { plz: '70000', person: 'Anna Kropfitsch', region: 'Southern Germany' },
+      { plz: '70000', person: 'Carmen Berger', region: 'Baden-Württemberg' },
       { plz: '80000', person: 'Anna Kropfitsch', region: 'Bavaria' },
-      { plz: '90000', person: 'Anna Kropfitsch', region: 'Bavaria/Baden-Württemberg' },
-      { plz: '30000', person: 'Carmen Bergar', region: 'Central Germany' },
-      { plz: '50000', person: 'Carmen Bergar', region: 'Hesse/Rhineland' },
-      { plz: '60000', person: 'Carmen Bergar', region: 'Hesse' },
-      { plz: '10000', person: 'Mattias Herbst', region: 'Berlin/Brandenburg' },
-      { plz: '20000', person: 'Mattias Herbst', region: 'Hamburg' },
-      { plz: '40000', person: 'Mattias Herbst', region: 'North Rhine-Westphalia' },
-      { plz: '00000', person: 'Mattias Herbst', region: 'Eastern Germany' },
+      { plz: '90000', person: 'Anna Kropfitsch', region: 'Bavaria' },
+      { plz: '30000', person: 'Matthias Herbst', region: 'Central Germany' },
+      { plz: '60000', person: 'Carmen Berger', region: 'Hesse' },
+      { plz: '34000', person: 'Carmen Berger', region: 'Hesse' },
+      { plz: '35000', person: 'Carmen Berger', region: 'Hesse' },
+      { plz: '36100', person: 'Carmen Berger', region: 'Hesse' },
+      { plz: '36200', person: 'Carmen Berger', region: 'Hesse' },
+      { plz: '36300', person: 'Carmen Berger', region: 'Hesse' },
+      { plz: '37200', person: 'Carmen Berger', region: 'Hesse' },
+      { plz: '10000', person: 'Matthias Herbst', region: 'Berlin/Brandenburg' },
+      { plz: '20000', person: 'Matthias Herbst', region: 'Hamburg' },
+      { plz: '00000', person: 'Matthias Herbst', region: 'Eastern Germany' },
     ];
 
     mappingTests.forEach(({ plz, person, region }) => {
       test(`PLZ ${plz} should map to ${person} (${region})`, () => {
-        const first = plz[0];
-        let expectedPerson;
-        
-        if ('789'.includes(first)) {
-          expectedPerson = 'Anna Kropfitsch';
-        } else if ('356'.includes(first)) {
-          expectedPerson = 'Carmen Bergar';
-        } else if ('1240'.includes(first)) {
-          expectedPerson = 'Mattias Herbst';
+        // Use the new rule system
+        const handler = require('../pages/api/check_plz.js').default;
+        const mockReq = { method: 'GET', query: { plz } };
+        const mockRes = {
+          status: jest.fn().mockReturnThis(),
+          json: jest.fn().mockReturnThis()
+        };
+
+        handler(mockReq, mockRes);
+
+        // Skip PLZ 4 and 5 as they require user choice
+        if (!plz.startsWith('4') && !plz.startsWith('5')) {
+          expect(mockRes.status).toHaveBeenCalledWith(200);
+          const jsonCall = mockRes.json.mock.calls[0][0];
+          expect(jsonCall.person).toBe(person);
         }
-        
-        expect(expectedPerson).toBe(person);
       });
     });
   });

@@ -1,32 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
 import { GermanAddressProcessor } from '../utils/germanAddressProcessor';
-
-/**
- * Returns avatar background color based on the responsible person
- * @param {string} person - Name of the responsible person
- * @returns {string} CSS color value
- */
-const getPersonColor = (person) => {
-  switch (person) {
-    case 'Anna Kropfitsch':
-      return '#059669'; // emerald
-    case 'Carmen Berger':
-      return '#1e40af'; // blue
-    case 'Matthias Herbst':
-      return '#ea580c'; // orange
-    default:
-      return '#64748b'; // slate
-  }
-};
-
-/**
- * Returns person initials for avatar
- * @param {string} person - Name of the responsible person
- * @returns {string} Person initials
- */
-const getPersonInitials = (person) => {
-  return person.split(' ').map(name => name[0]).join('');
-};
+import { getPersonColor, getPersonInitials, CONFIG } from '../config/plzConfig';
 
 /**
  * Main PLZ Router component - Comprehensive German Address Processing
@@ -112,7 +86,7 @@ export default function Home() {
       
       // Setup request timeout to prevent hanging requests
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), CONFIG.API_TIMEOUT);
       
       // Make API request with timeout handling
       const res = await fetch(`/api/check_plz?${params}`, {
@@ -136,7 +110,7 @@ export default function Home() {
             detectedCity: parseResult.city
           });
         } else {
-          setError('Ungültige Antwort vom Server.');
+          setError(CONFIG.ERROR_MESSAGES.INVALID_RESPONSE);
         }
       } else {
         // Handle API error responses
@@ -145,9 +119,9 @@ export default function Home() {
     } catch (err) {
       // Handle different error types
       if (err.name === 'AbortError') {
-        setError('Anfrage-Timeout. Bitte versuchen Sie es erneut.');
+        setError(CONFIG.ERROR_MESSAGES.REQUEST_TIMEOUT);
       } else {
-        setError('Serverfehler. Bitte versuchen Sie es später erneut.');
+        setError(CONFIG.ERROR_MESSAGES.SERVER_ERROR);
       }
     }
     setLoading(false);
