@@ -292,7 +292,7 @@ export default function Home() {
                   <span role="img" aria-label="Wahl erforderlich">🤔</span>
                   Ansprechpartner wählen
                 </div>
-                <div className="plz-display">PLZ: {result?.extractedPlz || (async () => await extractPlz(plz))()}</div>
+                <div className="plz-display">PLZ: {plz}</div>
               </div>
               <div className="choice-content">
                 <p className="choice-description">
