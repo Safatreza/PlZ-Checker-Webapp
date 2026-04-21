@@ -1,150 +1,70 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import { GermanAddressProcessor } from '../utils/germanAddressProcessor';
+import React, { useState, useCallback } from 'react';
 import { getPersonColor, getPersonInitials, CONFIG } from '../config/plzConfig';
 
-/**
- * Main PLZ Router component - Comprehensive German Address Processing
- * Handles ALL German cities, towns, villages, and districts
- */
 export default function Home() {
-  // State management for form and API interactions
-  const [plz, setPlz] = useState(''); // Current PLZ or address input value
-  const [result, setResult] = useState(null); // API response with person/land data
-  const [error, setError] = useState(''); // Error message to display
-  const [loading, setLoading] = useState(false); // Loading state during API call
-  const [choiceOptions, setChoiceOptions] = useState(null); // Options for user choice (PLZ 4/5)
-  const [processingInfo, setProcessingInfo] = useState(null); // Address processing details
-  
-  // Contact dropdown states
+  const [inputValue, setInputValue] = useState('');
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [choiceOptions, setChoiceOptions] = useState(null);
+
   const [showSupportDropdown, setShowSupportDropdown] = useState(false);
   const [showContactDropdown, setShowContactDropdown] = useState(false);
 
-  // Initialize comprehensive German address processor
-  const addressProcessor = useMemo(() => new GermanAddressProcessor(), []);
-
-  /**
-   * Process German address using comprehensive system
-   * @param {string} input - Address string or PLZ
-   * @returns {Promise<object>} {plz: string, confidence: string, source: string}
-   */
-  const parseGermanAddress = useCallback(async (input) => {
-    return await addressProcessor.processAddress(input);
-  }, [addressProcessor]);
-  
-  /**
-   * Simple wrapper to maintain compatibility
-   * @param {string} input - Address string or PLZ
-   * @returns {Promise<string>} Extracted PLZ or empty string
-   */
-  const extractPlz = useCallback(async (input) => {
-    const result = await parseGermanAddress(input);
-    return result.plz;
-  }, [parseGermanAddress]);
-  
-  /**
-   * Validates PLZ format (5 digits) - memoized for performance
-   * @param {string} value - PLZ to validate
-   * @returns {boolean} True if valid PLZ format
-   */
-  const validatePlz = useCallback((value) => /^\d{5}$/.test(value), []);
-
-  /**
-   * Handles form submission and API call with comprehensive address processing
-   * @param {Event} e - Form submit event
-   */
   const handleSubmit = useCallback(async (e, chosenPerson = null) => {
     e.preventDefault();
-    // Reset previous results and errors
     setResult(null);
     setError('');
     setChoiceOptions(null);
-    setProcessingInfo(null);
-    
     setLoading(true);
-    
+
     try {
-      // Parse German address or PLZ using comprehensive system
-      const parseResult = await parseGermanAddress(plz);
-      const extractedPlz = parseResult.plz;
-      
-      // Store processing info for debugging/display
-      setProcessingInfo(parseResult);
-      
-      // Client-side validation with enhanced error messages
-      if (!validatePlz(extractedPlz)) {
-        const errorMessage = addressProcessor.getErrorMessage(parseResult);
-        setError(errorMessage);
-        setLoading(false);
-        return;
-      }
-      
-      // Secure URL parameter construction
-      const params = new URLSearchParams({ plz: extractedPlz });
+      const params = new URLSearchParams({ input: inputValue.trim() });
       if (chosenPerson) {
         params.append('chosenPerson', chosenPerson);
       }
-      
-      // Setup request timeout to prevent hanging requests
+
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), CONFIG.API_TIMEOUT);
-      
-      // Make API request with timeout handling
-      const res = await fetch(`/api/check_plz?${params}`, {
-        signal: controller.signal
-      });
+
+      const res = await fetch(`/api/check_plz?${params}`, { signal: controller.signal });
       clearTimeout(timeoutId);
-      
+
       const data = await res.json();
+
       if (res.ok) {
         if (data.requiresChoice) {
-          // PLZ 4 or 5: Show choice options
           setChoiceOptions(data);
         } else if (data && typeof data.person === 'string' && typeof data.land === 'string') {
-          // Regular result with assigned person - add processing info
-          setResult({
-            ...data,
-            extractedPlz,
-            processingSource: parseResult.source,
-            processingConfidence: parseResult.confidence,
-            originalInput: plz,
-            detectedCity: parseResult.city
-          });
+          setResult(data);
         } else {
           setError(CONFIG.ERROR_MESSAGES.INVALID_RESPONSE);
         }
       } else {
-        // Handle API error responses
         setError(data?.error || 'Unbekannter Fehler.');
       }
     } catch (err) {
-      // Handle different error types
       if (err.name === 'AbortError') {
         setError(CONFIG.ERROR_MESSAGES.REQUEST_TIMEOUT);
       } else {
         setError(CONFIG.ERROR_MESSAGES.SERVER_ERROR);
       }
     }
+
     setLoading(false);
-  }, [plz, parseGermanAddress, addressProcessor]);
-  
-  // Handle user choice for PLZ 4/5
+  }, [inputValue]);
+
   const handlePersonChoice = useCallback((chosenPerson) => {
-    const fakeEvent = { preventDefault: () => {} };
-    handleSubmit(fakeEvent, chosenPerson);
+    handleSubmit({ preventDefault: () => {} }, chosenPerson);
   }, [handleSubmit]);
 
-  // Enhanced input change handler - accepts all characters for addresses
   const handleInputChange = useCallback((e) => {
-    setPlz(e.target.value); // Allow all characters for comprehensive address input
-    // Clear previous errors when user starts typing
-    if (error) {
-      setError('');
-    }
+    setInputValue(e.target.value);
+    if (error) setError('');
   }, [error]);
 
   return (
     <div>
-      {/* Professional Header */}
       <header className="header">
         <div className="header-content">
           <div className="logo-section">
@@ -159,7 +79,7 @@ export default function Home() {
           <nav className="nav-links">
             <div className="contact-buttons">
               <div className="contact-dropdown-container">
-                <button 
+                <button
                   className="contact-btn"
                   onClick={() => {
                     setShowSupportDropdown(!showSupportDropdown);
@@ -179,9 +99,9 @@ export default function Home() {
                   </div>
                 )}
               </div>
-              
+
               <div className="contact-dropdown-container">
-                <button 
+                <button
                   className="contact-btn"
                   onClick={() => {
                     setShowContactDropdown(!showContactDropdown);
@@ -215,9 +135,7 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="main-content">
-        {/* Hero Section */}
         <section className="hero-section">
           <h1 className="hero-title">PLZ ROUTER</h1>
           <p className="hero-subtitle">
@@ -228,7 +146,6 @@ export default function Home() {
           </p>
         </section>
 
-        {/* PLZ Checker Card */}
         <section className="plz-checker-card">
           <div className="card-header">
             <h2 className="card-title">PLZ-Prüfung</h2>
@@ -247,7 +164,7 @@ export default function Home() {
                 type="text"
                 title="Bitte geben Sie eine deutsche PLZ oder vollständige Adresse ein"
                 placeholder="z.B. 80331, München, oder Hauptstraße 15, Berlin"
-                value={plz}
+                value={inputValue}
                 onChange={handleInputChange}
                 className="input-field"
                 autoComplete="address-line1"
@@ -276,7 +193,6 @@ export default function Home() {
             </button>
           </form>
 
-          {/* Error Display */}
           {error && (
             <div className="error-card" id="error-message" role="alert">
               <span className="error-icon" role="img" aria-label="Fehler">⚠️</span>
@@ -284,7 +200,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* Choice Options Display for PLZ 4/5 */}
           {choiceOptions && (
             <div className="choice-card" role="region" aria-label="Ansprechpartner wählen">
               <div className="choice-header">
@@ -292,7 +207,7 @@ export default function Home() {
                   <span role="img" aria-label="Wahl erforderlich">🤔</span>
                   Ansprechpartner wählen
                 </div>
-                <div className="plz-display">PLZ: {result?.extractedPlz || (async () => await extractPlz(plz))()}</div>
+                <div className="plz-display">PLZ: {choiceOptions.extractedPlz || inputValue}</div>
               </div>
               <div className="choice-content">
                 <p className="choice-description">
@@ -305,11 +220,9 @@ export default function Home() {
                       className="choice-option"
                       onClick={() => handlePersonChoice(option.person)}
                     >
-                      <div 
+                      <div
                         className="person-avatar"
-                        style={{
-                          backgroundColor: getPersonColor(option.person)
-                        }}
+                        style={{ backgroundColor: getPersonColor(option.person) }}
                       >
                         {getPersonInitials(option.person)}
                       </div>
@@ -325,7 +238,6 @@ export default function Home() {
             </div>
           )}
 
-          {/* Results Display */}
           {result && (
             <div className="result-card" role="region" aria-label="Suchergebnis">
               <div className="result-header">
@@ -339,11 +251,9 @@ export default function Home() {
                 <div className="result-item">
                   <div className="result-label">Zuständiger Bearbeiter</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div 
+                    <div
                       className="person-avatar"
-                      style={{
-                        backgroundColor: getPersonColor(result.person)
-                      }}
+                      style={{ backgroundColor: getPersonColor(result.person) }}
                     >
                       {getPersonInitials(result.person)}
                     </div>
@@ -382,7 +292,6 @@ export default function Home() {
           )}
         </section>
 
-        {/* Information Section */}
         <section className="info-section">
           <h3 className="info-title">Wie funktioniert der PLZ Router?</h3>
           <div className="info-grid">

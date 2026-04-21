@@ -1,32 +1,45 @@
 import { CONTACTS, findPlzRule, CONFIG } from '../../config/plzConfig';
+import { GermanAddressProcessor } from '../../utils/germanAddressProcessor';
 
 // Serverless function configuration for Vercel
 export const config = {
   maxDuration: 30
 };
 
-/**
- * API endpoint for PLZ validation and person/state mapping
- * Enhanced with multi-digit prefix support for precise PLZ routing
- *
- * @param {NextApiRequest} req - API request object
- * @param {NextApiResponse} res - API response object
- */
-export default function handler(req, res) {
+const addressProcessor = new GermanAddressProcessor();
+
+export default async function handler(req, res) {
   try {
-    // Only allow GET requests for security
     if (req.method !== 'GET') {
       res.status(405).json({ error: CONFIG.ERROR_MESSAGES.METHOD_NOT_ALLOWED });
       return;
     }
 
-    // Extract and sanitize PLZ and chosen person from query parameters
-    const { plz, chosenPerson } = req.query;
-    const sanitizedPlz = String(plz || '').trim().replace(/[^\d]/g, '');
+    const { plz, input, chosenPerson } = req.query;
+
+    // Accept either ?input=<raw address or PLZ> or legacy ?plz=<digits>
+    let sanitizedPlz;
+    let processingMeta = {};
+
+    if (input !== undefined) {
+      const parseResult = await addressProcessor.processAddress(String(input || '').trim());
+      sanitizedPlz = parseResult.plz;
+      processingMeta = {
+        processingSource: parseResult.source,
+        processingConfidence: parseResult.confidence,
+        detectedCity: parseResult.city,
+        originalInput: String(input || '').trim()
+      };
+    } else {
+      sanitizedPlz = String(plz || '').trim().replace(/[^\d]/g, '');
+    }
 
     // Validate PLZ format: exactly 5 digits
     if (!sanitizedPlz || sanitizedPlz.length !== 5 || !/^\d{5}$/.test(sanitizedPlz)) {
-      res.status(400).json({ error: CONFIG.ERROR_MESSAGES.INVALID_PLZ });
+      const errorMsg = input !== undefined && processingMeta.processingSource
+        ? addressProcessor.getErrorMessage({ source: processingMeta.processingSource, city: processingMeta.detectedCity })
+        : CONFIG.ERROR_MESSAGES.INVALID_PLZ;
+      res.status(400).json({ error: errorMsg });
       return;
     }
 
@@ -51,6 +64,7 @@ export default function handler(req, res) {
         // Return options for user to choose from
         return res.status(200).json({
           requiresChoice: true,
+          extractedPlz: sanitizedPlz,
           options: rule.options.map(personName => {
             const contact = CONTACTS[personName];
             if (!contact) {
@@ -61,7 +75,8 @@ export default function handler(req, res) {
               contact
             };
           }),
-          land: typeof rule.land === 'function' ? rule.land(sanitizedPlz[0]) : rule.land
+          land: typeof rule.land === 'function' ? rule.land(sanitizedPlz[0]) : rule.land,
+          ...processingMeta
         });
       }
 
@@ -76,14 +91,13 @@ export default function handler(req, res) {
       return res.status(200).json({
         person: chosenPerson,
         land,
-        contact: chosenContact
+        contact: chosenContact,
+        extractedPlz: sanitizedPlz,
+        ...processingMeta
       });
     }
 
-    // Handle standard assignment rules
     const person = rule.person;
-
-    // Validate contact exists
     const contact = CONTACTS[person];
     if (!contact) {
       throw new Error(`Invalid contact configuration for: ${person}`);
@@ -91,11 +105,12 @@ export default function handler(req, res) {
 
     const land = typeof rule.land === 'function' ? rule.land(sanitizedPlz[0]) : rule.land;
 
-    // Return successful mapping result with contact details
     res.status(200).json({
       person,
       land,
-      contact
+      contact,
+      extractedPlz: sanitizedPlz,
+      ...processingMeta
     });
   } catch (error) {
     // Log error for debugging (removed in production via next.config.js)
